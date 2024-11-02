@@ -1,5 +1,3 @@
-from pyexpat import features
-
 from flask import Flask, request, jsonify, render_template, redirect
 import sqlite3
 
@@ -45,8 +43,8 @@ def register():
     elif request.method == 'POST':
         with DataBase('db1.sqlite') as db1_cur:
             db1_cur.execute("""INSERT INTO user 
-                                (login, password, individual_number, full_name, contacts, photo) 
-                                VALUES (?, ?, ?, ?, ?, ?)""",
+                            (login, password, individual_number, full_name, contacts, photo) 
+                            VALUES (?, ?, ?, ?, ?, ?)""",
                             (request.form['login'],
                              request.form['password'],
                              request.form['ipn'],
@@ -91,7 +89,7 @@ def items():
 
 
 @app.route('/items/<item_id>', methods=['GET', 'DELETE'])
-def item_id(item_id):
+def item(item_id):
     if request.method == 'GET':
         with DataBase('db1.sqlite') as db1_cur:
             db1_cur.execute('SELECT * FROM item WHERE id = ?', (item_id,))
@@ -128,7 +126,7 @@ def leasers():
 
 
 @app.route('/leasers/<leaser_id>', methods=['GET'])
-def leaser_id(leaser_id):
+def leaser(leaser_id):
     with DataBase('db1.sqlite') as db1_cur:
         db1_cur.execute('SELECT id, login, full_name, contacts, photo FROM user WHERE id = ?', (leaser_id,))
         return render_template('leaser_id.html', user = db1_cur.fetchone())
@@ -145,7 +143,7 @@ def contracts():
 
 
 @app.route('/contracts/<contract_id>', methods=['GET', 'PATCH', 'PUT'])
-def contract_id(contract_id):
+def contract(contract_id):
     if request.method == 'GET':
         with DataBase('db1.sqlite') as db1_cur:
             db1_cur.execute('SELECT * FROM contract WHERE id = ?', (contract_id,))
@@ -165,7 +163,9 @@ def search():
 @app.route('/profile/search_history', methods=['GET', 'DELETE'])
 def search_history():
     if request.method == 'GET':
-        return jsonify({'message': 'search history'})
+        with DataBase('db1.sqlite') as db1_cur:
+            db1_cur.execute('SELECT * FROM search_history WHERE user = ?', (1,))
+            return db1_cur.fetchall()
     elif request.method == 'DELETE':
         return jsonify({'message': 'search history cleared'})
 
@@ -182,7 +182,9 @@ def review():
 @app.route('/compare', methods=['GET', 'PUT', 'PATCH'])
 def compare():
     if request.method == 'GET':
-        return jsonify({'message': 'comparison results'})
+        with DataBase('db1.sqlite') as db1_cur:
+            db1_cur.execute('SELECT name, price_hour FROM item WHERE id = ? OR id = ?', (1, 2))
+            return db1_cur.fetchall()
     elif request.method in ['PUT', 'PATCH']:
         return jsonify({'message': 'comparison updated'})
 
