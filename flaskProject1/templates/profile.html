@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Profile</title>
+</head>
+<body>
+    <form action="/" method="get">
+        <button type="submit">Home</button>
+    </form>
+
+    <h2>Profile</h2>
+    <form method="POST" action="/items">
+        <label for="name">Name</label><br>
+        <input type="text" id="name" name="name" required>
+        <br>
+
+        <label for="description">Description</label><br>
+        <input type="text" id="description" name="description" required>
+        <br>
+
+        <label for="owner">Owner(1,2 or 3)</label><br>
+        <input type="number" id="owner" name="owner" required>
+        <br>
+
+        <label for="price_hour">Price_hour</label><br>
+        <input type="number" id="price_hour" name="price_hour" required>
+        <br>
+
+        <label for="price_day">Price_day</label><br>
+        <input type="number" id="price_day" name="price_day" required>
+        <br>
+
+        <label for="price_week">Price_week</label><br>
+        <input type="number" id="price_week" name="price_week" required>
+        <br>
+
+        <label for="price_month">Price_month</label><br>
+        <input type="number" id="price_month" name="price_month" required>
+        <br>
+
+        <button type="submit">Add item</button>
+    </form>
+
+
+</body>
+</html>

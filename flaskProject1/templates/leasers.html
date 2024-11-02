@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leasers list</title>
+</head>
+<body>
+    <form action="/" method="get">
+        <button type="submit">Home</button>
+    </form>
+    <h1>Leasers</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>id</th>
+                <th>Login</th>
+                <th>Name</th>
+                <th>Contacts</th>
+                <th>Photo</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for leaser in leasers %}
+            <tr>
+                <td>{{ leaser.id }}</td>
+                <td><a href="/leasers/{{ leaser.id }}">{{ leaser.login }}</a></td>
+                <td>{{ leaser.full_name }}</td>
+                <td>{{ leaser.contacts }}</td>
+                <td>{{ leaser.photo }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>

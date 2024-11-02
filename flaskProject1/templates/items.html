@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Items List</title>
+</head>
+<body>
+    <form action="/" method="get">
+        <button type="submit">Home</button>
+    </form>
+
+    <h1>Items List</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Owner</th>
+                <th>Price per Hour</th>
+                <th>Price per Day</th>
+                <th>Price per Week</th>
+                <th>Price per Month</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.id }}</td>
+                <td><a href="/items/{{ item.id }}">{{ item.name }}</a></td>
+                <td>{{ item.description }}</td>
+                <td>{{ item.owner }}</td>
+                <td>${{ item.price_hour }}</td>
+                <td>${{ item.price_day }}</td>
+                <td>${{ item.price_week }}</td>
+                <td>${{ item.price_month }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>

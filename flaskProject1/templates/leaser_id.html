@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaser Details</title>
+
+</head>
+<body>
+    <form action="/" method="get">
+        <button type="submit">Home</button>
+    </form>
+
+    <div class="container">
+        <h1>Leaser Details</h1>
+
+        <div class="field">
+            <span>ID:</span> {{ user.id }}
+        </div>
+        <div class="field">
+            <span>Login:</span> {{ user.login }}
+        </div>
+        <div class="field">
+            <span>Name:</span> {{ user.full_name }}
+        </div>
+        <div class="field">
+            <span>Contacts:</span> {{ user.contacts }}
+        </div>
+        <div class="field">
+            <span>Photo:</span> {{ user.photo }}
+        </div>
+    </div>
+</body>
+</html>

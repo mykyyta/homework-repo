@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Item Details</title>
+
+</head>
+<body>
+    <form action="/" method="get">
+        <button type="submit">Home</button>
+    </form>
+
+    <div class="container">
+        <h1>Item Details</h1>
+
+        <div class="field">
+            <span>ID:</span> {{ item.id }}
+        </div>
+        <div class="field">
+            <span>Name:</span> {{ item.name }}
+        </div>
+        <div class="field">
+            <span>Description:</span> {{ item.description }}
+        </div>
+        <div class="field">
+            <span>Owner ID:</span> {{ item.owner }}
+        </div>
+        <div class="field">
+            <span>Price per Hour:</span> ${{ item.price_hour }}
+        </div>
+        <div class="field">
+            <span>Price per Day:</span> ${{ item.price_day }}
+        </div>
+        <div class="field">
+            <span>Price per Week:</span> ${{ item.price_week }}
+        </div>
+        <div class="field">
+            <span>Price per Month:</span> ${{ item.price_month }}
+        </div>
+    </div>
+</body>
+</html>
