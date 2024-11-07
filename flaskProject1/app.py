@@ -202,7 +202,7 @@ def contracts():
             db1_cur.execute('SELECT * FROM contract WHERE taker = ?', (session['id'],))
             taker_contracts = db1_cur.fetchall()
             return render_template('contracts.html',
-                                    leather_contracts = leaser_contracts,
+                                    leaser_contracts = leaser_contracts,
                                     taker_contracts = taker_contracts)
 
 
