@@ -31,6 +31,25 @@ class DataBase:
         self.conn.commit()
         self.conn.close()
 
+class DBManager:
+
+    @staticmethod
+    def select(table_name, filter_dict = None):
+        if filter_dict is None:
+            filter_dict = {}
+
+        with DataBase('db1.sqlite') as db1_cur:
+            query = f'SELECT * FROM {table_name}'
+            if filter_dict:
+                query += ' WHERE ' + ' AND '.join(f'{key} = ?' for key in filter_dict.keys())
+            db1_cur.execute(query, tuple(value for value in filter_dict.values()))
+            return db1_cur.fetchall()
+
+    @staticmethod
+    def insert_items(table_name, data_dict):
+        with (DataBase('db1.sqlite') as db1_cur):
+            query = f'INSERT INTO {table_name} ({' , '.join(data_dict.keys())}) VALUES ({' , '.join([':' + key for key in data_dict.keys()])})'
+            db1_cur.execute(query, data_dict)
 
 @app.route('/')
 def hello_world():
@@ -42,20 +61,15 @@ def hello_world():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'GET':
-        return render_template('login.html') #jsonify({'message': 'login page'})
-
+        return render_template('login.html')
 
     elif request.method == 'POST':
-        with DataBase('db1.sqlite')  as db1_cur:
-            db1_cur.execute("SELECT * FROM user WHERE login=? and password=?", (request.form['login'], request.form['password']))
-            existing_user = db1_cur.fetchone()
-            if existing_user:
-                session['id'] = existing_user['id']
-                session['full_name'] = existing_user['full_name']
-            else:
-                redirect('/login')
-
-            return redirect('/profile')
+        existing_user = DBManager.select('user',{'login' : request.form['login'], 'password': request.form['password']})
+        if existing_user:
+                session['id'] = existing_user[0]['id']
+                session['full_name'] = existing_user[0]['full_name']
+                return redirect('/profile')
+        return redirect('/login')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -63,17 +77,9 @@ def register():
         return render_template('register.html')
 
     elif request.method == 'POST':
-        with DataBase('db1.sqlite') as db1_cur:
-            db1_cur.execute("""INSERT INTO user 
-                            (login, password, individual_number, full_name, contacts, photo) 
-                            VALUES (?, ?, ?, ?, ?, ?)""",
-                            (request.form['login'],
-                             request.form['password'],
-                             request.form['ipn'],
-                             request.form['full_name'],
-                             request.form['contacts'],
-                             request.form['photo']))
-            return redirect('/login')
+        query_dict = request.form.to_dict()
+        DBManager.insert_items('user', query_dict)
+        return redirect('/login')
 
 
 @app.route('/logout', methods=['GET', 'POST', 'DELETE'])
@@ -90,10 +96,8 @@ def profile():
         return redirect('/login')
 
     if request.method == 'GET':
-        with DataBase('db1.sqlite') as db1_cur:
-            db1_cur.execute("SELECT login FROM user WHERE id=?", (session['id'],))
-            user = db1_cur.fetchone()
-            return render_template('profile.html', login=user['login'])
+        user = DBManager.select('user', {'id' : session['id']})[0]
+        return render_template('profile.html', login=user['login'])
 
     elif request.method in ['PUT', 'PATCH']:
         return jsonify({'message': 'Profile updated'})
@@ -127,24 +131,21 @@ def items():
             return redirect('/login')
         query_dict = request.form.to_dict()
         query_dict['owner'] = session['id']
-        with DataBase('db1.sqlite') as db1_cur:
-            db1_cur.execute('''INSERT INTO item 
-                            (name, description, owner, price_hour, price_day, price_week, price_month)
-                            VALUES (:name, :description, :owner, :price_hour, :price_day, :price_week, :price_month)''',
-                            query_dict)
-            return redirect('/items?my_items=true')
+        DBManager.insert_items('item', query_dict)
+        return redirect('/items?my_items=true')
 
 
 
 @app.route('/items/<item_id>', methods=['GET', 'DELETE'])
 def item(item_id):
     if request.method == 'GET':
-        with DataBase('db1.sqlite') as db1_cur:
-            db1_cur.execute('SELECT * FROM item WHERE id = ?', (item_id,))
-            return render_template('item_id.html', item=db1_cur.fetchone())
+        item_profile = DBManager.select('item', {'id' : item_id})[0]
+        return render_template('item_id.html', item=item_profile)
 
     elif request.method == 'DELETE':
         return jsonify({'message': f'item {item_id} deleted'})
+
+
 
 
 @app.route('/profile/favorites', methods=['GET', 'POST', 'DELETE', 'PATCH'])
@@ -152,7 +153,7 @@ def item(item_id):
 def favorites():
     if request.method == 'GET':
         with DataBase('db1.sqlite') as db1_cur:
-            db1_cur.execute('SELECT * FROM item i JOIN main.favorite f on i.id = f.favorite_item Where f.user = ?', (session['id'],))
+            db1_cur.execute('SELECT * FROM item i JOIN favorite f on i.id = f.favorite_item Where f.user = ?', (session['id'],))
             return render_template('favorites.html', items = db1_cur.fetchall())
 
     elif request.method == 'POST':
@@ -169,9 +170,9 @@ def favorite_item(favorite_id):
     if request.method == 'GET':
         return jsonify({'message': f'favorite item {favorite_id}'})
     elif request.method == 'POST':
-        with DataBase('db1.sqlite') as db1_cur:
-            db1_cur.execute(''' INSERT INTO favorite (user, favorite_item) VALUES (?, ?)''', (session['id'], favorite_id))
-            return redirect('/items')
+        new_entry = {'user': session['id'], 'favorite_item': favorite_id}
+        DBManager.insert_items('favorite', new_entry)
+        return redirect(request.referrer)
     elif request.method == 'DELETE':
         return jsonify({'message': f'favorite {favorite_id} deleted'})
 
@@ -179,49 +180,40 @@ def favorite_item(favorite_id):
 @app.route('/leasers', methods=['GET'])
 @login_check
 def leasers():
-    with DataBase('db1.sqlite') as db1_cur:
-        db1_cur.execute('SELECT id, login, full_name, contacts, photo FROM user')
-        return render_template('leasers.html', leasers = db1_cur.fetchall())
+    leasers_list = DBManager.select('user')
+    return render_template('leasers.html', leasers = leasers_list)
 
 
 @app.route('/leasers/<leaser_id>', methods=['GET'])
 @login_check
 def leaser(leaser_id):
-    with DataBase('db1.sqlite') as db1_cur:
-        db1_cur.execute('SELECT id, login, full_name, contacts, photo FROM user WHERE id = ?', (leaser_id,))
-        return render_template('leaser_id.html', user = db1_cur.fetchone())
-
+    user = DBManager.select('user', {'id': leaser_id})[0]
+    return render_template('leaser_id.html', user = user)
 
 @app.route('/contracts', methods=['GET', 'POST'])
 @login_check
 def contracts():
     if request.method == 'GET':
-        with DataBase('db1.sqlite') as db1_cur:
-            db1_cur.execute('SELECT * FROM contract WHERE leaser = ?', (session['id'],))
-            leaser_contracts = db1_cur.fetchall()
-            db1_cur.execute('SELECT * FROM contract WHERE taker = ?', (session['id'],))
-            taker_contracts = db1_cur.fetchall()
-            return render_template('contracts.html',
+        leaser_contracts = DBManager.select('contract', {'leaser': session['id']})
+        taker_contracts = DBManager.select('contract', {'taker': session['id']})
+        return render_template('contracts.html',
                                     leaser_contracts = leaser_contracts,
                                     taker_contracts = taker_contracts)
 
-
     elif request.method == 'POST':
-        with DataBase('db1.sqlite') as db1_cur:
-            query_dict = request.form.to_dict()
-            query_dict['taker'] = session['id']
-            db1_cur.execute('''INSERT INTO contract (start_date, end_date, leaser, taker, item) 
-                                VALUES (:start_date, :end_date, :leaser, :taker, :item)''', query_dict)
-            return redirect('/contracts')
+        query_dict = request.form.to_dict()
+        query_dict['taker'] = session['id']
+        DBManager.insert_items('contract', query_dict)
+        return redirect('/contracts')
 
 
-@app.route('/contracts/<contract_id>', methods=['GET', 'PATCH', 'PUT'])
+@app.route('/contracts/<contract_id>', methods=['GET', 'POST', 'PATCH', 'PUT'])
 @login_check
 def contract(contract_id):
+
     if request.method == 'GET':
-        with DataBase('db1.sqlite') as db1_cur:
-            db1_cur.execute('SELECT * FROM contract WHERE id = ?', (contract_id,))
-            return db1_cur.fetchone()
+        return DBManager.select('contract', {'id': contract_id})[0]
+
     elif request.method in ['PATCH', 'PUT']:
         return jsonify({'message': f'contract {contract_id} updated'})
 
@@ -238,9 +230,8 @@ def search():
 @login_check
 def search_history():
     if request.method == 'GET':
-        with DataBase('db1.sqlite') as db1_cur:
-            db1_cur.execute('SELECT * FROM search_history WHERE user = ?', (session['id'],))
-            return db1_cur.fetchall()
+        return DBManager.select('search_history', {'user': session['id']})
+
     elif request.method == 'DELETE':
         return jsonify({'message': 'search history cleared'})
 
@@ -249,18 +240,14 @@ def search_history():
 @login_check
 def review():
     if request.method == 'GET':
-        with DataBase('db1.sqlite') as db1_cur:
-            db1_cur.execute('SELECT * FROM feedback WHERE user = ?', (session['id'],))
-
-            reviews_of_user = db1_cur.fetchall()
-            grades = [row["grade"] for row in reviews_of_user]
-            average_grade = sum(grades) / len(grades) if grades else '0'
-            db1_cur.execute('SELECT * FROM feedback WHERE author = ?', (session['id'],))
-            reviews_by_user = db1_cur.fetchall()
-            return render_template('reviews.html',
-                                   reviews_of_user=reviews_of_user,
-                                   reviews_by_user=reviews_by_user,
-                                   average_grade=average_grade)
+        reviews_of_user =DBManager.select('feedback', {'user': session['id']})
+        grades = [row["grade"] for row in reviews_of_user]
+        average_grade = sum(grades) / len(grades) if grades else '0'
+        reviews_by_user = DBManager.select('feedback', {'author': session['id']})
+        return render_template('reviews.html',
+                               reviews_of_user=reviews_of_user,
+                               reviews_by_user=reviews_by_user,
+                               average_grade=average_grade)
 
     elif request.method == 'POST':
         return jsonify({'message': 'Reviews submitted'})
