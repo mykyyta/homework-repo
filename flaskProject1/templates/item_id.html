@@ -39,5 +39,29 @@
             <span>Price per Month:</span> ${{ item.price_month }}
         </div>
     </div>
+
+<!-- Contract Creation Form -->
+    <div class="container">
+        <h2>Create a Contract</h2>
+        <form action="/contracts" method="post">
+            <div class="form-group">
+                <label for="start_date">Start Date:</label>
+                <input type="date" id="start_date" name="start_date" required>
+            </div>
+            <div class="form-group">
+                <label for="end_date">End Date:</label>
+                <input type="date" id="end_date" name="end_date" required>
+            </div>
+            <div class="form-group">
+                <label for="leaser">Leaser ID:</label>
+                <input type="number" id="leaser" name="leaser" value="{{ item.owner }}" readonly>
+            </div>
+            <div class="form-group">
+                <label for="item">Item ID:</label>
+                <input type="number" id="item" name="item" value="{{ item.id }}" readonly>
+            </div>
+            <button type="submit">Create Contract</button>
+        </form>
+    </div>
 </body>
 </html>

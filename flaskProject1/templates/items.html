@@ -7,14 +7,13 @@
 </head>
 <body>
     <form action="/" method="get">
-        <button type="submit">Home</button>
+        <button type="submit">Profile</button>
     </form>
 
     <h1>Items List</h1>
     <table>
         <thead>
             <tr>
-                <th>ID</th>
                 <th>Name</th>
                 <th>Description</th>
                 <th>Owner</th>
@@ -27,7 +26,6 @@
         <tbody>
             {% for item in items %}
             <tr>
-                <td>{{ item.id }}</td>
                 <td><a href="/items/{{ item.id }}">{{ item.name }}</a></td>
                 <td>{{ item.description }}</td>
                 <td>{{ item.owner }}</td>
@@ -35,10 +33,55 @@
                 <td>${{ item.price_day }}</td>
                 <td>${{ item.price_week }}</td>
                 <td>${{ item.price_month }}</td>
+                <td>{% if not item.in_favorites %}
+                        <form action="profile/favorites/{{ item.id }}" method="post">
+                             <button type="submit">Add to favorites</button>
+                        </form>
+                    {% else %}
+                        in favorites
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+
+    <h1>Add your item</h1>
+    <!-- Show this form only if the user is logged in -->
+    {% if logged_in %}
+    <div class="button-block">
+        <form method="POST" action="/items">
+        <label for="name">Name</label><br>
+        <input type="text" id="name" name="name" required>
+        <br>
+
+        <label for="description">Description</label><br>
+        <input type="text" id="description" name="description" required>
+        <br>
+
+        <label for="price_hour">Price_hour</label><br>
+        <input type="number" id="price_hour" name="price_hour" required>
+        <br>
+
+        <label for="price_day">Price_day</label><br>
+        <input type="number" id="price_day" name="price_day" required>
+        <br>
+
+        <label for="price_week">Price_week</label><br>
+        <input type="number" id="price_week" name="price_week" required>
+        <br>
+
+        <label for="price_month">Price_month</label><br>
+        <input type="number" id="price_month" name="price_month" required>
+        <br>
+
+        <button type="submit">Add item</button>
+    </form>
+    </div>
+    {% else %}
+    <!-- Show a message or link to registration if not registered -->
+    <p>Please <a href="/register">register</a> to place your item</p>
+    {% endif %}
 
 </body>
 </html>

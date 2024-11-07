@@ -5,43 +5,43 @@
     <title>Profile</title>
 </head>
 <body>
-    <form action="/" method="get">
-        <button type="submit">Home</button>
-    </form>
 
-    <h2>Profile</h2>
-    <form method="POST" action="/items">
-        <label for="name">Name</label><br>
-        <input type="text" id="name" name="name" required>
-        <br>
+    <h2>Hello, {{ login }}!</h2>
 
-        <label for="description">Description</label><br>
-        <input type="text" id="description" name="description" required>
-        <br>
+     <div class="button-block">
+         <form action="/items" method="get">
+            <button type="submit" name="my_items" value=True>My items</button>
+        </form>
 
-        <label for="owner">Owner(1,2 or 3)</label><br>
-        <input type="number" id="owner" name="owner" required>
-        <br>
+        <form action="/items" method="get">
+            <button type="submit">All items</button>
+        </form>
 
-        <label for="price_hour">Price_hour</label><br>
-        <input type="number" id="price_hour" name="price_hour" required>
-        <br>
+        <form action="/leasers" method="get">
+            <button type="submit">Leasers</button>
+        </form>
 
-        <label for="price_day">Price_day</label><br>
-        <input type="number" id="price_day" name="price_day" required>
-        <br>
+        <form action="/contracts" method="get">
+            <button type="submit">Contracts</button>
+        </form>
 
-        <label for="price_week">Price_week</label><br>
-        <input type="number" id="price_week" name="price_week" required>
-        <br>
+        <form action="/reviews" method="get">
+            <button type="submit">Reviews</button>
+        </form>
 
-        <label for="price_month">Price_month</label><br>
-        <input type="number" id="price_month" name="price_month" required>
-        <br>
+         <form action="profile/favorites" method="get">
+            <button type="submit">Favorite items</button>
+        </form>
 
-        <button type="submit">Add item</button>
-    </form>
+         <form action="/profile/search_history" method="get">
+            <button type="submit">Search history</button>
+        </form>
 
+         <form action="/logout" method="get">
+            <button type="submit">Logout</button>
+        </form>
+
+    </div>
 
 </body>
 </html>

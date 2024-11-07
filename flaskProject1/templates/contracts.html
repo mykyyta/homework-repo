@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Contracts</title>
+</head>
+<body>
+    <form action="/" method="get">
+        <button type="submit">Profile</button>
+    </form>
+
+    <h1>Contracts</h1>
+
+    <!-- Table for contracts where user is the taker -->
+    <h2>Contracts as Taker</h2>
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Text</th>
+            <th>Leaser</th>
+            <th>Item</th>
+        </tr>
+        {% for contract in taker_contracts %}
+        <tr>
+            <td>{{ contract.id }}</td>
+            <td>{{ contract.start_date }}</td>
+            <td>{{ contract.end_date }}</td>
+            <td>{{ contract.text }}</td>
+            <td>{{ contract.leaser }}</td>
+            <td>{{ contract.item }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <!-- Table for contracts where user is the leaser -->
+    <h2>Contracts as Leaser</h2>
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Text</th>
+            <th>Taker</th>
+            <th>Item</th>
+        </tr>
+        {% for contract in leaser_contracts %}
+        <tr>
+            <td>{{ contract.id }}</td>
+            <td>{{ contract.start_date }}</td>
+            <td>{{ contract.end_date }}</td>
+            <td>{{ contract.text }}</td>
+            <td>{{ contract.taker }}</td>
+            <td>{{ contract.item }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
