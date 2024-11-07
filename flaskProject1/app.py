@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, redirect, session, flash
+from flask import Flask, request, jsonify, render_template, redirect, session
 from functools import wraps
 import sqlite3
 
@@ -12,7 +12,6 @@ def login_check(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         if session.get('id') is None:
-            flash('You need to login first!')
             return redirect('/login')
         return func(*args, **kwargs)
     return wrapper
@@ -31,22 +30,29 @@ class DataBase:
         self.conn.commit()
         self.conn.close()
 
-class DBManager:
 
+class DBManager:
     @staticmethod
-    def select(table_name, filter_dict = None):
+    def select(table_name, filter_dict = None, join = 'JOIN', join_dict = None):
         if filter_dict is None:
             filter_dict = {}
+        if join_dict is None:
+            join_dict = {}
 
         with DataBase('db1.sqlite') as db1_cur:
             query = f'SELECT * FROM {table_name}'
+
+            for join_table, condition in join_dict.items():
+                query += f' {join} {join_table} ON {table_name}.{condition[0]} = {join_table}.{condition[1]}'
+
             if filter_dict:
                 query += ' WHERE ' + ' AND '.join(f'{key} = ?' for key in filter_dict.keys())
             db1_cur.execute(query, tuple(value for value in filter_dict.values()))
             return db1_cur.fetchall()
 
+
     @staticmethod
-    def insert_items(table_name, data_dict):
+    def insert(table_name, data_dict):
         with (DataBase('db1.sqlite') as db1_cur):
             query = f'INSERT INTO {table_name} ({' , '.join(data_dict.keys())}) VALUES ({' , '.join([':' + key for key in data_dict.keys()])})'
             db1_cur.execute(query, data_dict)
@@ -78,7 +84,7 @@ def register():
 
     elif request.method == 'POST':
         query_dict = request.form.to_dict()
-        DBManager.insert_items('user', query_dict)
+        DBManager.insert('user', query_dict)
         return redirect('/login')
 
 
@@ -117,7 +123,7 @@ def items():
                 db1_cur.execute("""SELECT i.*, f.user is not null AS in_favorites 
                                     FROM item i LEFT JOIN favorite f ON i.id = f.favorite_item AND f.user=? 
                                     WHERE i.owner=?""",
-                                (session['id'], session['id'] ))
+                                (session['id'], session['id']))
             elif logged_in:
                 db1_cur.execute("""SELECT i.*, f.user is not null AS in_favorites 
                                     FROM item i LEFT JOIN favorite f ON i.id = f.favorite_item AND f.user=?""",
@@ -131,7 +137,7 @@ def items():
             return redirect('/login')
         query_dict = request.form.to_dict()
         query_dict['owner'] = session['id']
-        DBManager.insert_items('item', query_dict)
+        DBManager.insert('item', query_dict)
         return redirect('/items?my_items=true')
 
 
@@ -146,15 +152,12 @@ def item(item_id):
         return jsonify({'message': f'item {item_id} deleted'})
 
 
-
-
 @app.route('/profile/favorites', methods=['GET', 'POST', 'DELETE', 'PATCH'])
 @login_check
 def favorites():
     if request.method == 'GET':
-        with DataBase('db1.sqlite') as db1_cur:
-            db1_cur.execute('SELECT * FROM item i JOIN favorite f on i.id = f.favorite_item Where f.user = ?', (session['id'],))
-            return render_template('favorites.html', items = db1_cur.fetchall())
+        favorite_items = DBManager.select('item', {'user' : session['id']}, join_dict={'favorite' :('id','favorite_item')})
+        return render_template('favorites.html', items=favorite_items)
 
     elif request.method == 'POST':
         return jsonify({'message': 'favorite added'})
@@ -171,7 +174,7 @@ def favorite_item(favorite_id):
         return jsonify({'message': f'favorite item {favorite_id}'})
     elif request.method == 'POST':
         new_entry = {'user': session['id'], 'favorite_item': favorite_id}
-        DBManager.insert_items('favorite', new_entry)
+        DBManager.insert('favorite', new_entry)
         return redirect(request.referrer)
     elif request.method == 'DELETE':
         return jsonify({'message': f'favorite {favorite_id} deleted'})
@@ -203,7 +206,7 @@ def contracts():
     elif request.method == 'POST':
         query_dict = request.form.to_dict()
         query_dict['taker'] = session['id']
-        DBManager.insert_items('contract', query_dict)
+        DBManager.insert('contract', query_dict)
         return redirect('/contracts')
 
 
