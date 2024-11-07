@@ -14,7 +14,6 @@
     <table>
         <thead>
             <tr>
-                <th>ID</th>
                 <th>Name</th>
                 <th>Description</th>
                 <th>Owner</th>
@@ -27,7 +26,6 @@
         <tbody>
             {% for item in items %}
             <tr>
-                <td>{{ item.id }}</td>
                 <td><a href="/items/{{ item.id }}">{{ item.name }}</a></td>
                 <td>{{ item.description }}</td>
                 <td>{{ item.owner }}</td>
@@ -35,9 +33,6 @@
                 <td>${{ item.price_day }}</td>
                 <td>${{ item.price_week }}</td>
                 <td>${{ item.price_month }}</td>
-                <td><form action="profile/favorites/{{ item.id }}" method="post">
-                    <button type="submit" >Add to favorites</button>
-                    </form></td>
             </tr>
             {% endfor %}
         </tbody>

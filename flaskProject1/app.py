@@ -109,10 +109,17 @@ def items():
         my_items = request.args.get('my_items')
 
         with DataBase('db1.sqlite') as db1_cur:
-            if my_items:
-                db1_cur.execute("SELECT i.*, f.user is not null AS in_favorites FROM item i LEFT JOIN favorite f ON i.id = f.favorite_item AND f.user=? WHERE i.owner=?", (session['id'], session['id'] ))
-                return render_template('items.html', items=db1_cur.fetchall(), logged_in=logged_in)
-            db1_cur.execute("SELECT *, f.user is not null AS in_favorites FROM item i LEFT JOIN favorite f ON i.id = f.favorite_item AND f.user=?", (session['id'],))
+            if my_items and logged_in:
+                db1_cur.execute("""SELECT i.*, f.user is not null AS in_favorites 
+                                    FROM item i LEFT JOIN favorite f ON i.id = f.favorite_item AND f.user=? 
+                                    WHERE i.owner=?""",
+                                (session['id'], session['id'] ))
+            elif logged_in:
+                db1_cur.execute("""SELECT i.*, f.user is not null AS in_favorites 
+                                    FROM item i LEFT JOIN favorite f ON i.id = f.favorite_item AND f.user=?""",
+                                (session['id'],))
+            else:
+                db1_cur.execute("SELECT * from item")
             return render_template('items.html', items=db1_cur.fetchall(), logged_in=logged_in)
 
     elif request.method == 'POST':
@@ -238,13 +245,25 @@ def search_history():
         return jsonify({'message': 'search history cleared'})
 
 
-@app.route('/reviews', methods=['GET'])
+@app.route('/reviews', methods=['GET', 'POST'])
+@login_check
 def review():
     if request.method == 'GET':
         with DataBase('db1.sqlite') as db1_cur:
-            db1_cur.execute('SELECT * FROM feedback')
-            return db1_cur.fetchall()
-    return jsonify({'message': 'Reviews submitted'})
+            db1_cur.execute('SELECT * FROM feedback WHERE user = ?', (session['id'],))
+
+            reviews_of_user = db1_cur.fetchall()
+            grades = [row["grade"] for row in reviews_of_user]
+            average_grade = sum(grades) / len(grades) if grades else '0'
+            db1_cur.execute('SELECT * FROM feedback WHERE author = ?', (session['id'],))
+            reviews_by_user = db1_cur.fetchall()
+            return render_template('reviews.html',
+                                   reviews_of_user=reviews_of_user,
+                                   reviews_by_user=reviews_by_user,
+                                   average_grade=average_grade)
+
+    elif request.method == 'POST':
+        return jsonify({'message': 'Reviews submitted'})
 
 
 @app.route('/compare', methods=['GET', 'PUT', 'PATCH'])

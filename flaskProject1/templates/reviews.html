@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Reviews</title>
+</head>
+<body>
+
+<h2>Reviews of User</h2>
+<h4>Your average grade: {{ average_grade }}</h4>
+<table border="1">
+    <tr>
+        <th>Contract ID</th>
+        <th>Author</th>
+        <th>Text</th>
+        <th>Grade</th>
+    </tr>
+    {% for review in reviews_of_user %}
+    <tr>
+        <td>{{ review.contract }}</td>
+        <td>{{ review.author }}</td>
+        <td>{{ review.text }}</td>
+        <td>{{ review.grade }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h2>Reviews Given by User</h2>
+<table border="1">
+    <tr>
+        <th>Contract ID</th>
+        <th>Receiver</th>
+        <th>Text</th>
+        <th>Grade</th>
+    </tr>
+    {% for review in reviews_by_user %}
+    <tr>
+        <td>{{ review.contract }}</td>
+        <td>{{ review.user }}</td>
+        <td>{{ review.text }}</td>
+        <td>{{ review.grade }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+</body>
+</html>
