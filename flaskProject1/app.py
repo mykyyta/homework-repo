@@ -42,12 +42,26 @@ class DBManager:
         with DataBase('db1.sqlite') as db1_cur:
             query = f'SELECT * FROM {table_name}'
 
-            for join_table, condition in join_dict.items():
-                query += f' {join} {join_table} ON {table_name}.{condition[0]} = {join_table}.{condition[1]}'
+            for join_table, join_info in join_dict.items():
+                conditions = []
+                for condition in join_info.get('on', []):
+                    conditions.append(f'{table_name}.{condition[0]} = {join_table}.{condition[1]}')
+                for custom_condition in join_info.get('conditions', []):
+                    conditions.append(f'{join_table}.{custom_condition[0]} = ?')
+                query += f' {join} {join_table} ON ' + ' AND '.join(conditions)
+
+            join_params = [cond[1] for join in join_dict.values() for cond in join.get('conditions', [])]
+            filter_params = list(filter_dict.values())
+
+            # for join_table, conditions in join_dict.items():
+            #     query += f' {join} {join_table} ON '
+            #     query += ' AND '.join(f'{table_name}.{condition[0]} = {join_table}.{condition[1]}' for condition in conditions)
 
             if filter_dict:
                 query += ' WHERE ' + ' AND '.join(f'{key} = ?' for key in filter_dict.keys())
-            db1_cur.execute(query, tuple(value for value in filter_dict.values()))
+
+            db1_cur.execute(query, tuple(join_params + filter_params))
+            #db1_cur.execute(query, tuple(value for value in filter_dict.values()))
             return db1_cur.fetchall()
 
 
@@ -117,20 +131,34 @@ def items():
 
     if request.method == 'GET':
         my_items = request.args.get('my_items')
+        if my_items and logged_in:
+            selected_items = DBManager.select('item',
+                             {'owner': session['id']},
+                             "LEFT JOIN",
+                             {'favorite':{'on':[('id', 'favorite_item')], 'conditions':[('user', session['id'])]}})
+        elif logged_in:
+            selected_items = DBManager.select('item',
+                             None,
+                             "LEFT JOIN",
+                             {'favorite':{'on':[('id', 'favorite_item')], 'conditions':[('user', session['id'])]}})
+        else:
+            selected_items = DBManager.select('item')
 
-        with DataBase('db1.sqlite') as db1_cur:
-            if my_items and logged_in:
-                db1_cur.execute("""SELECT i.*, f.user is not null AS in_favorites 
-                                    FROM item i LEFT JOIN favorite f ON i.id = f.favorite_item AND f.user=? 
-                                    WHERE i.owner=?""",
-                                (session['id'], session['id']))
-            elif logged_in:
-                db1_cur.execute("""SELECT i.*, f.user is not null AS in_favorites 
-                                    FROM item i LEFT JOIN favorite f ON i.id = f.favorite_item AND f.user=?""",
-                                (session['id'],))
-            else:
-                db1_cur.execute("SELECT * from item")
-            return render_template('items.html', items=db1_cur.fetchall(), logged_in=logged_in)
+        return render_template('items.html', items = selected_items, logged_in=logged_in)
+
+        # with DataBase('db1.sqlite') as db1_cur:
+        #     if my_items and logged_in:
+        #         db1_cur.execute("""SELECT i.*, f.user FROM item i
+        #                                 LEFT JOIN favorite f ON i.id = f.favorite_item AND f.user = ?
+        #                                 WHERE i.owner= ?""",
+        #                         (session['id'], session['id']))
+        #     elif logged_in:
+        #         db1_cur.execute("""SELECT i.*, f.user FROM item i
+        #                                 LEFT JOIN favorite f ON i.id = f.favorite_item AND f.user=?""",
+        #                         (session['id'],))
+        #     else:
+        #         db1_cur.execute("SELECT * from item")
+        #     return render_template('items.html', items=db1_cur.fetchall(), logged_in=logged_in)
 
     elif request.method == 'POST':
         if not logged_in:
@@ -156,7 +184,7 @@ def item(item_id):
 @login_check
 def favorites():
     if request.method == 'GET':
-        favorite_items = DBManager.select('item', {'user' : session['id']}, join_dict={'favorite' :('id','favorite_item')})
+        favorite_items = DBManager.select('item', {'user' : session['id']}, join_dict={'favorite' : {'on': (('id','favorite_item'),)}})
         return render_template('favorites.html', items=favorite_items)
 
     elif request.method == 'POST':
