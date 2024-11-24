@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaser Details</title>
+
+</head>
+<body>
+    <form action="/" method="get">
+        <button type="submit">Profile</button>
+    </form>
+
+    <div class="container">
+        <h1>Contract Details</h1>
+
+        <div class="field">
+            <span>ID:</span> {{ contract.id }}
+        </div>
+        <div class="field">
+            <span>Start:</span> {{ contract.start_date }}
+        </div>
+        <div class="field">
+            <span>End:</span> {{ contract.end_date }}
+        </div>
+        <div class="field">
+            <span>Text:</span> {{ contract.text }}
+        </div>
+        <div class="field">
+            <span>Leaser:</span> {{ contract.leaser }}
+        </div>
+        <div class="field">
+            <span>Taker:</span> {{ contract.taker }}
+        </div>
+        <div class="field">
+            <span>Item:</span> {{ contract.item }}
+        </div>
+    </div>
+</body>
+</html>

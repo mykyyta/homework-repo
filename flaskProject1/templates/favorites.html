@@ -24,7 +24,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for item in items %}
+            {% for item, favorite in items %}
             <tr>
                 <td><a href="/items/{{ item.id }}">{{ item.name }}</a></td>
                 <td>{{ item.description }}</td>
