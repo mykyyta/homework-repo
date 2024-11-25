@@ -72,9 +72,11 @@ class DBManager:
             query = f'INSERT INTO {table_name} ({' , '.join(data_dict.keys())}) VALUES ({' , '.join([':' + key for key in data_dict.keys()])})'
             db1_cur.execute(query, data_dict)
 
+
 @app.teardown_appcontext
 def shutdown_session(exception=None):
     db_session.remove()
+
 @app.route('/')
 def hello_world():
     if session.get('id') is None:
