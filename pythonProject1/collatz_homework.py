@@ -1,10 +1,10 @@
 from datetime import datetime
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, Pool
 from tqdm import tqdm
 
 def check_one_chunk(start_, end_):
     already_checked = {1}
-    for number in tqdm(range(start_, end_+1)):
+    for number in range(start_, end_+1):
         sequence = []
         x = number
         while (x not in already_checked) and (x >= number):
@@ -16,8 +16,8 @@ def check_one_chunk(start_, end_):
         already_checked.update(sequence)
         already_checked.remove(number)
 
-chunks = 1000
-total_range = 10000000
+chunks = 10000
+total_range = 10**9
 num_processes = 4
 
 def worker(queue):
