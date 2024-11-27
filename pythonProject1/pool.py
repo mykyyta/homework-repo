@@ -1,10 +1,11 @@
 from collatz_homework import check_one_chunk
-from multiprocessing import Process, Queue, Pool
+from multiprocessing import Pool
 from datetime import datetime
+from tqdm import tqdm
 
-chunks = 10000
-total_range = 10**6
-num_processes = 4
+chunks = 100000
+total_range = 10**9
+num_processes = 8
 
 if __name__ == '__main__':
     start_time = datetime.now()
@@ -12,8 +13,9 @@ if __name__ == '__main__':
     step = total_range // chunks
     tasks = [(i * step + 1, (i + 1) * step) for i in range(chunks)]
 
-    with Pool(processes=num_processes) as pool:
-        pool.starmap(check_one_chunk, tasks)
+    pool = Pool(processes=num_processes)
+    for _ in tqdm(pool.imap_unordered(check_one_chunk, tasks), total=len(tasks)):
+        pass
 
     end_time = datetime.now()
     print("Total time:", end_time - start_time)
