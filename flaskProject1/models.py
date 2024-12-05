@@ -1,4 +1,6 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, REAL
+import datetime
+
+from sqlalchemy import Column, Integer, String, ForeignKey, REAL, DateTime
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -11,6 +13,7 @@ class User(Base):
     full_name = Column(String)
     contacts = Column(String)
     photo = Column(String)
+    email = Column(String)
 
     # items = relationship('Item', back_populates='owner_relationship')
     # leasers = relationship('Contract', back_populates='leaser_relationship')
@@ -66,6 +69,7 @@ class Contract(Base):
     leaser = Column(Integer, ForeignKey('user.id'))
     taker = Column(Integer, ForeignKey('user.id'))
     item = Column(Integer, ForeignKey('item.id'))
+    timestamp = Column(DateTime, default=datetime.datetime.now)
 
     # leaser_relationship = relationship('User', back_populates='leasers')
     # taker_relationship = relationship('User', back_populates='takers')
