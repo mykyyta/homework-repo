@@ -69,7 +69,7 @@ class DBManager:
     @staticmethod
     def insert(table_name, data_dict):
         with (DataBaseCon('db1.sqlite') as db1_cur):
-            query = f'INSERT INTO {table_name} ({' , '.join(data_dict.keys())}) VALUES ({' , '.join([':' + key for key in data_dict.keys()])})'
+            query = f'''INSERT INTO {table_name} ({' , '.join(data_dict.keys())}) VALUES ({' , '.join([':' + key for key in data_dict.keys()])})'''
             db1_cur.execute(query, data_dict)
 
 
@@ -305,4 +305,4 @@ def compare():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)
