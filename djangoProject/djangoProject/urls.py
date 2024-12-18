@@ -20,11 +20,12 @@ from django.urls import path, include
 import users.views
 
 urlpatterns = [
+    path('', users.views.index_page, name='index_page'),
     path("admin/", admin.site.urls),
     path("user/", include("users.urls")),
     path("trainer/", include("trainer.urls")),
     path("booking/", include("booking.urls")),
-    path("login/", users.views.login_page, name="login page"),
-    path("logout/", users.views.logout_page, name="logout page"),
-    path("register/", users.views.register_page, name="register page"),
+    path("login/", users.views.login_page, name="login_page"),
+    path("logout/", users.views.logout_page, name="logout_page"),
+    path("register/", users.views.register_page, name="register_page"),
 ]
