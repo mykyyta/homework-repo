@@ -4,8 +4,8 @@ from datetime import datetime
 from tqdm import tqdm
 
 chunks = 1000
-total_range = 10**9
-num_processes = cpu_count()
+total_range = 10**8
+num_processes = 4
 
 if __name__ == '__main__':
     start_time = datetime.now()

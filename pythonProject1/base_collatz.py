@@ -28,8 +28,8 @@ if __name__ == '__main__':
     start_time = datetime.now()
 
     chunks = 1000 # кількість відрізків, задач
-    total_range = 10**9 # ліміт всього діапазону
-    num_processes = 8 # кількість процесів
+    total_range = 10**8 # ліміт всього діапазону
+    num_processes = 4 # кількість процесів
 
     task_queue = Queue()
 

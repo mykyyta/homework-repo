@@ -303,6 +303,13 @@ def compare():
     elif request.method in ['PUT', 'PATCH']:
         return jsonify({'message': 'comparison updated'})
 
+@app.route('/add_task', methods=['GET'])
+def add_task():
+    import tasks
+    tasks.add.delay(1, 2)
+    return jsonify({'message': 'task added'})
+
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

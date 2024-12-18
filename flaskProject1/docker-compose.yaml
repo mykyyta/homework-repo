@@ -1,0 +1,22 @@
+services:
+  web_app:
+    build: .
+    command:
+      - python app.py
+    ports:
+      - "5000:5000"
+
+  rabbit_mq:
+    image: rabbitmq:3-management
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+
+
+  celery_worker:
+    build: .
+    command:
+      - celery -A tasks worker --loglevel=info
+    environment:
+      - RABBIT_HOST=rabbit_mq
+
