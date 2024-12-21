@@ -1,10 +1,12 @@
 services:
   web_app:
     build: .
-    command:
-      - python app.py
+    command: python app.py
     ports:
-      - "5000:5000"
+      - "5001:5001"
+    environment:
+      - RABBIT_HOST=rabbit_mq
+
 
   rabbit_mq:
     image: rabbitmq:3-management
@@ -15,8 +17,7 @@ services:
 
   celery_worker:
     build: .
-    command:
-      - celery -A tasks worker --loglevel=info
+    command: celery -A tasks worker --loglevel=info
     environment:
       - RABBIT_HOST=rabbit_mq
 

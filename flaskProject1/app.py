@@ -5,6 +5,7 @@ import sqlite3
 from sqlalchemy import select, outerjoin, join, and_
 from database import init_db, db_session
 import models
+import tasks
 
 
 app = Flask(__name__)
@@ -245,6 +246,9 @@ def contracts():
         new_contract = models.Contract(**new_contract_dict)
         db_session.add(new_contract)
         db_session.commit()
+
+        contract_id = new_contract.id
+        tasks.send_email.delay(contract_id)
         return redirect('/contracts')
 
 
@@ -305,11 +309,14 @@ def compare():
 
 @app.route('/add_task', methods=['GET'])
 def add_task():
-    import tasks
     tasks.add.delay(1, 2)
-    return jsonify({'message': 'task added'})
+    return 'task added'
 
+@app.route('/send_email')
+def send_email():
+    tasks.send_email.delay(args=['11111'])
+    return "Task sent to Celery"
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5001)

@@ -1,24 +1,32 @@
+import os
 import smtplib
-
+from email.mime.text import MIMEText
 from celery import Celery
 
-app = Celery('hello', broker='amqp://guest@localhost//')
+app = Celery('tasks', broker=f'pyamqp://guest@{os.environ.get("RABBIT_HOST", "localhost")}/')
 
 @app.task
 def add(a, b):
     return a+b
 
-def send_email():
-    from email.message import EmailMessage
+@app.task
+def send_email(contract_number):
+    smtp_server = 'smtp.gmail.com'
+    smtp_port = 587
+    sender_email = 'mykyta.glushko@gmail.com'
+    to_email = 'mykyta.glushko@gmail.com'
+    sender_password = ""
 
-    msg = EmailMessage()
-    msg.set_content('Hello World')
+    msg = MIMEText('text about contract', 'plain')
+    msg['From'] = sender_email
+    msg['To'] = to_email
+    msg['Subject'] = f'contact {contract_number} signed'
 
-    msg['Subject'] = f'New contract'
-    msg['From'] = '<EMAIL>'
-    msg['To'] = '<EMAIL>'
+    server = smtplib.SMTP(smtp_server, smtp_port)
+    server.starttls()
+    server.login(sender_email, sender_password)
+    server.sendmail(sender_email, to_email, msg.as_string())
+    server.quit()
 
-    s = smtplib.SMTP('smtp.gmail.com', 587)
-    s.send_message(msg)
-    s.quit()
+    return f"Email sent"
 
