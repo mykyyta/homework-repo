@@ -314,7 +314,7 @@ def add_task():
 
 @app.route('/send_email')
 def send_email():
-    tasks.send_email.delay(args=['11111'])
+    tasks.send_email.delay('111')
     return "Task sent to Celery"
 
 

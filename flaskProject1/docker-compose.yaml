@@ -6,6 +6,9 @@ services:
       - "5001:5001"
     environment:
       - RABBIT_HOST=rabbit_mq
+      - DB_HOST=db_host
+      - DB_USER=postgres
+      - DB_PASSWORD=example
 
 
   rabbit_mq:
@@ -20,4 +23,18 @@ services:
     command: celery -A tasks worker --loglevel=info
     environment:
       - RABBIT_HOST=rabbit_mq
+      - DB_HOST=db_host
+      - DB_USER=postgres
+      - DB_PASSWORD=example
+    depends_on:
+      - rabbit_mq
+      - db_postgres
 
+  db_postgres:
+    image: postgres
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=example
+    hostname: db_host
+    ports:
+      - '5432:5432'
