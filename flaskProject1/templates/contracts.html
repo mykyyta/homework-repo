@@ -11,7 +11,6 @@
 
     <h1>Contracts</h1>
 
-    <!-- Table for contracts where user is the taker -->
     <h2>Contracts as Taker</h2>
     <table>
         <tr>
@@ -30,11 +29,13 @@
             <td>{{ contract.text }}</td>
             <td>{{ contract.leaser }}</td>
             <td>{{ contract.item }}</td>
+            <td>
+                <a href="/contracts/{{ contract.id }}">Details/Write review</a>
+            </td>
         </tr>
         {% endfor %}
     </table>
 
-    <!-- Table for contracts where user is the leaser -->
     <h2>Contracts as Leaser</h2>
     <table>
         <tr>
@@ -53,6 +54,9 @@
             <td>{{ contract.text }}</td>
             <td>{{ contract.taker }}</td>
             <td>{{ contract.item }}</td>
+            <td>
+                <a href="/contracts/{{ contract.id }}">Details/Write review</a>
+            </td>
         </tr>
         {% endfor %}
     </table>

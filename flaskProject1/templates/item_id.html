@@ -40,6 +40,13 @@
         </div>
     </div>
 
+    <p>Unavailable Dates:</p>
+    <ul>
+    {% for date_range in unavailable_dates %}
+        <li>{{ date_range.start_date }} to {{ date_range.end_date }}</li>
+    {% endfor %}
+    </ul>
+
     {% if session.id == item.owner %}
     <div class="container">
         <form action="/items/{{ item.id }}/delete" method="post" style="display:inline;">
@@ -66,6 +73,12 @@
             <button type="submit">Create Contract</button>
         </form>
     </div>
+    {% endif %}
+
+    {% if error %}
+        <div style="color: red; margin-bottom: 10px;">
+            {{ error }}
+        </div>
     {% endif %}
 </body>
 </html>

@@ -1,8 +1,7 @@
 from flask import Flask, request, jsonify, render_template, redirect, session
 from functools import wraps
 import sqlite3
-
-from sqlalchemy import select, outerjoin, join, and_
+from sqlalchemy import select, outerjoin, join, and_, or_
 from database import init_db, db_session
 import models
 import tasks
@@ -172,18 +171,40 @@ def items():
         return redirect('/items?my_items=true')
 
 
-
 @app.route('/items/<item_id>', methods=['GET'])
 @login_check
 def item(item_id):
     item_profile = db_session.execute(select(models.Item).where(models.Item.id == item_id)).scalar()
-    return render_template('item_id.html', item=item_profile)
+
+    item_contracts = db_session.execute(
+        select(models.Contract).where(models.Contract.item == item_id)
+    ).scalars().all()
+
+    unavailable_dates = []
+    for one_contract in item_contracts:
+        unavailable_dates.append({
+            "start_date": one_contract.start_date,
+            "end_date": one_contract.end_date
+        })
+
+    error_message = request.args.get('error')
+
+    return render_template('item_id.html',item=item_profile, unavailable_dates=unavailable_dates, error=error_message)
 
 @app.route('/items/<item_id>/delete', methods=['POST'])
 @login_check
 def item_delete(item_id):
     item_profile = db_session.execute(select(models.Item).where(models.Item.id == item_id)).scalar()
+
+
     if item_profile:
+
+        item_contracts = db_session.query(models.Contract).filter(models.Contract.item == item_id).all()
+
+        if item_contracts:
+            error_message = "Item cannot be deleted because it has active contracts"
+            return redirect(f'/items/{item_id}?error={error_message}')
+
         db_session.delete(item_profile)
         db_session.commit()
         return redirect('/items?my_items=True')
@@ -239,8 +260,27 @@ def contracts():
 
     elif request.method == 'POST':
         new_contract_dict = request.form.to_dict()
+        start_date = new_contract_dict['start_date']
+        end_date = new_contract_dict['end_date']
+        item_id = new_contract_dict['item']
+
+        conflicting_contracts = db_session.execute(
+            select(models.Contract).where(
+                models.Contract.item == item_id,
+                or_(
+                    and_(models.Contract.start_date <= start_date, models.Contract.end_date >= start_date),
+                    and_(models.Contract.start_date <= end_date, models.Contract.end_date >= end_date),
+                    and_(models.Contract.start_date >= start_date, models.Contract.end_date <= end_date)
+                )
+            )
+        ).scalars().all()
+
+        if conflicting_contracts:
+            error_message = "The selected dates are unavailable for this item"
+            return redirect(f"/items/{item_id}?error={error_message}")
+
         new_contract_dict['taker'] = session['id']
-        new_contract_dict['text'] = '' #temporary
+        new_contract_dict['text'] = 'contract text'
         new_contract = models.Contract(**new_contract_dict)
         db_session.add(new_contract)
         db_session.commit()
@@ -256,9 +296,6 @@ def contract(contract_id):
     if request.method == 'GET':
         contract_id = db_session.execute(select(models.Contract).where(models.Contract.id == contract_id)).scalar()
         return render_template('contract_id.html', contract=contract_id)
-
-    elif request.method in ['PATCH', 'PUT']:
-        return jsonify({'message': f'contract {contract_id} updated'})
 
 
 @app.route('/search', methods=['GET', 'POST'])
@@ -294,7 +331,19 @@ def review():
                                average_grade=average_grade)
 
     elif request.method == 'POST':
-        return jsonify({'message': 'Reviews submitted'})
+        contract_id = request.form['contract_id']
+        review_text = request.form['review_text']
+        grade = request.form['grade']
+
+        new_feedback = models.Feedback(
+                            author=session['id'],
+                            user=contract.taker if contract.leaser == session['id'] else contract.leaser,
+                            text=review_text,
+                            grade=grade
+                            )
+
+        db_session.add(new_feedback)
+        db_session.commit()
 
 
 @app.route('/compare', methods=['GET', 'PUT', 'PATCH'])
