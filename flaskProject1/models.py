@@ -2,6 +2,7 @@ import datetime
 
 from sqlalchemy import Column, Integer, String, ForeignKey, REAL, DateTime
 from sqlalchemy.orm import relationship
+
 from database import Base
 
 class User(Base):
@@ -41,6 +42,8 @@ class Item(Base):
     price_day = Column(REAL)
     price_week = Column(REAL)
     price_month = Column(REAL)
+
+    favorites = relationship("Favorite", back_populates="item", cascade="all, delete-orphan")
 
     # owner_relationship = relationship('User', back_populates='items')
     # contract_items = relationship('Contract', back_populates='item_relationship')
@@ -88,7 +91,9 @@ class Favorite(Base):
     __tablename__ = 'favorite'
     fav_id = Column(Integer, primary_key=True, autoincrement=True)
     user = Column(Integer, ForeignKey('user.id'))
-    favorite_item = Column(Integer, ForeignKey('item.id'))
+    favorite_item = Column(Integer, ForeignKey('item.id', ondelete="CASCADE"))
+
+    item = relationship("Item", back_populates="favorites")
 
     def __init__(self, user, favorite_item):
         super().__init__()

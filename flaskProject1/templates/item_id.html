@@ -40,6 +40,15 @@
         </div>
     </div>
 
+    {% if session.id == item.owner %}
+    <div class="container">
+        <form action="/items/{{ item.id }}/delete" method="post" style="display:inline;">
+            <button type="submit" style="color: red;">Delete Item</button>
+        </form>
+    </div>
+    {% endif %}
+
+    {% if session.id != item.owner %}
     <div class="container">
         <h2>Create a Contract</h2>
         <form action="/contracts" method="post">
@@ -57,5 +66,6 @@
             <button type="submit">Create Contract</button>
         </form>
     </div>
+    {% endif %}
 </body>
 </html>

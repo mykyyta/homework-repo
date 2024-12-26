@@ -33,14 +33,16 @@
                 <td>${{ item.price_day }}</td>
                 <td>${{ item.price_week }}</td>
                 <td>${{ item.price_month }}</td>
-                <td>{%  if logged_in %}
-                        {% if not favorite %}
-                            <form action="profile/favorites/{{ item.id }}" method="post">
-                                 <button type="submit">Add to favorites</button>
-                            </form>
-                        {% else %}
-                            in favorites
-                        {% endif %}
+                <td>{% if session.id %}
+                        <form method="POST" action="/profile/favorites">
+                            {% if not favorite %}
+                                <input type="hidden" name="item_id" value="{{ item.id }}">
+                                <button type="submit" name="action" value="add">Add to favorites</button>
+                            {% else %}
+                                <input type="hidden" name="item_id" value="{{ item.id }}">
+                                <button type="submit" name="action" value="delete">Remove from favorites</button>
+                            {% endif %}
+                        </form>
                     {% endif %}
                 </td>
             </tr>
@@ -48,9 +50,8 @@
         </tbody>
     </table>
 
-    <h1>Add your item</h1>
-    <!-- Show this form only if the user is logged in -->
     {% if logged_in %}
+    <h1>Add your item</h1>
     <div class="button-block">
         <form method="POST" action="/items">
         <label for="name">Name</label><br>
@@ -81,7 +82,7 @@
     </form>
     </div>
     {% else %}
-    <!-- Show a message or link to registration if not registered -->
+
     <p>Please <a href="/register">register</a> to place your item</p>
     {% endif %}
 

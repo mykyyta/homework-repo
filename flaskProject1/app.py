@@ -173,18 +173,24 @@ def items():
 
 
 
-@app.route('/items/<item_id>', methods=['GET', 'DELETE'])
+@app.route('/items/<item_id>', methods=['GET'])
 @login_check
 def item(item_id):
-    if request.method == 'GET':
-        item_profile = db_session.execute(select(models.Item).where(models.Item.id == item_id)).scalar()
-        return render_template('item_id.html', item=item_profile)
+    item_profile = db_session.execute(select(models.Item).where(models.Item.id == item_id)).scalar()
+    return render_template('item_id.html', item=item_profile)
 
-    elif request.method == 'DELETE':
-        return jsonify({'message': f'item {item_id} deleted'})
+@app.route('/items/<item_id>/delete', methods=['POST'])
+@login_check
+def item_delete(item_id):
+    item_profile = db_session.execute(select(models.Item).where(models.Item.id == item_id)).scalar()
+    if item_profile:
+        db_session.delete(item_profile)
+        db_session.commit()
+        return redirect('/items?my_items=True')
+    else: 'item not exists'
 
 
-@app.route('/profile/favorites', methods=['GET', 'POST', 'DELETE', 'PATCH'])
+@app.route('/profile/favorites', methods=['GET', 'POST'])
 @login_check
 def favorites():
     if request.method == 'GET':
@@ -193,28 +199,20 @@ def favorites():
         stmt = select(models.Item, models.Favorite).select_from(join_stmt).where(where_condition)
         selected_items = db_session.execute(stmt).all()
         return render_template('favorites.html', items=selected_items)
-
-    elif request.method == 'POST':
-        return jsonify({'message': 'favorite added'})
-    elif request.method == 'DELETE':
-        return jsonify({'message': 'favorites deleted'})
-    elif request.method == 'PATCH':
-        return jsonify({'message': 'favorite updated'})
-
-
-@app.route('/profile/favorites/<favorite_id>', methods=['GET', 'POST', 'DELETE'])
-@login_check
-def favorite_item(favorite_id):
-    if request.method == 'GET':
-        return jsonify({'message': f'favorite item {favorite_id}'})
-    elif request.method == 'POST':
-        new_favorite = models.Favorite(session['id'], favorite_id)
-        db_session.add(new_favorite)
-        db_session.commit()
+    else:
+        item_id = request.form.get('item_id')
+        action = request.form.get('action')
+        if action == 'add':
+            favorite = models.Favorite(session['id'], item_id)
+            db_session.add(favorite)
+            db_session.commit()
+        elif action == 'delete':
+            stmt = select(models.Favorite).where(models.Favorite.favorite_item == item_id,
+                                                 models.Favorite.user == session['id'])
+            favorite = db_session.execute(stmt).scalar()
+            db_session.delete(favorite)
+            db_session.commit()
         return redirect(request.referrer)
-    elif request.method == 'DELETE':
-        return jsonify({'message': f'favorite {favorite_id} deleted'})
-
 
 @app.route('/leasers', methods=['GET'])
 @login_check
