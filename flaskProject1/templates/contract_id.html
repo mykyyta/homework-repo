@@ -39,11 +39,10 @@
 
     {% if contract.taker == session.id or contract.leaser == session.id %}
     <h3>Write a Review</h3>
-    <form action="/feedback" method="POST">
+    <form action="/reviews" method="POST">
         <input type="hidden" name="contract_id" value="{{ contract.id }}">
         <label for="review_text">Review Text:</label><br>
         <textarea id="review_text" name="review_text" rows="4" cols="50" required></textarea><br><br>
-
         <label for="grade">Grade (1-5):</label>
         <select id="grade" name="grade" required>
             <option value="1">1</option>

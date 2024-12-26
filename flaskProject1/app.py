@@ -1,7 +1,11 @@
+import time
+from datetime import datetime
+from xxlimited_35 import error
+
 from flask import Flask, request, jsonify, render_template, redirect, session
 from functools import wraps
 import sqlite3
-from sqlalchemy import select, outerjoin, join, and_, or_
+from sqlalchemy import select, outerjoin, join, and_, or_, delete
 from database import init_db, db_session
 import models
 import tasks
@@ -141,24 +145,53 @@ def profile():
 def items():
     logged_in = session.get('id') is not None
 
+
     if request.method == 'GET':
         my_items = request.args.get('my_items')
+        search_query = request.args.get('q', '').strip()
+
+        if logged_in and search_query:
+            search_history_entry = models.SearchHistory(session['id'], search_query, datetime.now())
+            db_session.add(search_history_entry)
+            db_session.commit()
 
         if my_items and logged_in:
             join_condition = and_(models.Item.id == models.Favorite.favorite_item, models.Favorite.user == session['id'])
             join_stmt = outerjoin(models.Item, models.Favorite, join_condition)
             stmt = select(models.Item, models.Favorite).select_from(join_stmt).where(models.Item.owner == session['id'])
+
+            if search_query:
+                stmt = stmt.where(
+                    models.Item.name.ilike(f"%{search_query}%") |
+                    models.Item.description.ilike(f"%{search_query}%")
+                )
+
             selected_items = db_session.execute(stmt).all()
         elif logged_in:
             join_condition = and_(models.Item.id == models.Favorite.favorite_item, models.Favorite.user == session['id'])
             join_stmt = outerjoin(models.Item, models.Favorite, join_condition)
             stmt = select(models.Item, models.Favorite).select_from(join_stmt)
+
+            if search_query:
+                stmt = stmt.where(
+                    models.Item.name.ilike(f"%{search_query}%") |
+                    models.Item.description.ilike(f"%{search_query}%")
+                )
+
             selected_items = db_session.execute(stmt).all()
         else:
-            rows = db_session.execute(select(models.Item)).all()
+            stmt = select(models.Item)
+
+            if search_query:
+                stmt = stmt.where(
+                    models.Item.name.ilike(f"%{search_query}%") |
+                    models.Item.description.ilike(f"%{search_query}%")
+                )
+
+            rows = db_session.execute(stmt).all()
             selected_items = [(row[0], None) for row in rows]
 
-        return render_template('items.html', items = selected_items, logged_in=logged_in)
+        return render_template('items.html', items = selected_items, logged_in=logged_in, my_items=my_items)
 
     elif request.method == 'POST':
         if not logged_in:
@@ -306,16 +339,17 @@ def search():
         return jsonify({'message': 'search submitted'})
 
 
-@app.route('/profile/search_history', methods=['GET', 'DELETE'])
+@app.route('/profile/search_history', methods=['GET', 'POST'])
 @login_check
 def search_history():
     if request.method == 'GET':
         history = db_session.execute(select(models.SearchHistory).where(models.SearchHistory.user == session['id'])).scalars()
-        return [str(row) for row in history]
+        return render_template('search_history.html', history=history)
 
-    elif request.method == 'DELETE':
-        return jsonify({'message': 'search history cleared'})
-
+    else:
+        db_session.execute(delete(models.SearchHistory).where(models.SearchHistory.user == session['id']))
+        db_session.commit()
+        return redirect('/profile/search_history')
 
 @app.route('/reviews', methods=['GET', 'POST'])
 @login_check
@@ -335,15 +369,32 @@ def review():
         review_text = request.form['review_text']
         grade = request.form['grade']
 
+        item_contract = db_session.execute(
+            select(models.Contract).where(models.Contract.id == contract_id)
+        ).scalar()
+
+        existing_feedback = db_session.execute(select(models.Feedback)
+                                        .where(
+                                            models.Feedback.contract == contract_id,
+                                                        models.Feedback.author == session['id']
+                                              )
+                                            ).scalar()
+
+        if existing_feedback:
+            error_message = "The review is already given"
+            return redirect(f'/reviews?error={error_message}')
+
         new_feedback = models.Feedback(
                             author=session['id'],
-                            user=contract.taker if contract.leaser == session['id'] else contract.leaser,
+                            user=item_contract.taker if item_contract.leaser == session['id'] else item_contract.leaser,
+                            contract=contract_id,
                             text=review_text,
                             grade=grade
                             )
 
         db_session.add(new_feedback)
         db_session.commit()
+        return redirect('/reviews')
 
 
 @app.route('/compare', methods=['GET', 'PUT', 'PATCH'])
@@ -354,7 +405,7 @@ def compare():
     elif request.method in ['PUT', 'PATCH']:
         return jsonify({'message': 'comparison updated'})
 
-@app.route('/add_task', methods=['GET'])
+@app.route('/add_task')
 def add_task():
     tasks.add.delay(1, 2)
     return 'task added'

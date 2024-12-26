@@ -45,5 +45,9 @@
         {% endfor %}
     </table>
 
+    {% if request.args.get('error') %}
+        <p style="color: red;">{{ request.args.get('error') }}</p>
+    {% endif %}
+
 </body>
 </html>

@@ -122,7 +122,7 @@ class SearchHistory(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     user = Column(Integer, ForeignKey('user.id'))
     search_text = Column(String)
-    timestamp = Column(Integer)
+    time = Column(DateTime, default=datetime.datetime.now)
 
     def __init__(self, user, search_text, timestamp):
         super().__init__()

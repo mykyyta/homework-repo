@@ -49,6 +49,16 @@
             {% endfor %}
         </tbody>
     </table>
+    <br>
+
+
+    {% if not my_items %}
+        <form method="GET" action="/items">
+        <label for="search">Search Items:</label>
+        <input type="text" id="search" name="q" placeholder="Enter item name or description" required>
+        <button type="submit">Search</button>
+        </form>
+    {% endif %}
 
     {% if logged_in %}
     <h1>Add your item</h1>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search History</title>
+</head>
+<body>
+    <h1>Your Search History</h1>
+
+    {% if history %}
+        <ul>
+            {% for entry in history %}
+                <li>{{ entry.search_text }} ({{ entry.time }})</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No search history available.</p>
+    {% endif %}
+
+    <form action="/profile/search_history" method="POST">
+        <button type="submit">Clear Search History</button>
+    </form>
+</body>
