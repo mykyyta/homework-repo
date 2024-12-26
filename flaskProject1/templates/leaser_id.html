@@ -30,5 +30,34 @@
             <span>Photo:</span> {{ user.photo }}
         </div>
     </div>
+
+    <h1>Items List</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Owner</th>
+                <th>Price per Hour</th>
+                <th>Price per Day</th>
+                <th>Price per Week</th>
+                <th>Price per Month</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td><a href="/items/{{ item.id }}">{{ item.name }}</a></td>
+                <td>{{ item.description }}</td>
+                <td>{{ item.owner }}</td>
+                <td>${{ item.price_hour }}</td>
+                <td>${{ item.price_day }}</td>
+                <td>${{ item.price_week }}</td>
+                <td>${{ item.price_month }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <br>
 </body>
 </html>

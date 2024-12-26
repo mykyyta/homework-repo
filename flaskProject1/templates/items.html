@@ -51,13 +51,13 @@
     </table>
     <br>
 
-
     {% if not my_items %}
         <form method="GET" action="/items">
         <label for="search">Search Items:</label>
         <input type="text" id="search" name="q" placeholder="Enter item name or description" required>
         <button type="submit">Search</button>
         </form>
+        <a href="/items">Reset search</a>
     {% endif %}
 
     {% if logged_in %}

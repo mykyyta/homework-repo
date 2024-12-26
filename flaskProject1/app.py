@@ -1,7 +1,5 @@
-import time
-from datetime import datetime
-from xxlimited_35 import error
 
+from datetime import datetime
 from flask import Flask, request, jsonify, render_template, redirect, session
 from functools import wraps
 import sqlite3
@@ -145,49 +143,28 @@ def profile():
 def items():
     logged_in = session.get('id') is not None
 
-
     if request.method == 'GET':
         my_items = request.args.get('my_items')
         search_query = request.args.get('q', '').strip()
 
-        if logged_in and search_query:
+        if logged_in and search_query: #запис в історію пошуку
             search_history_entry = models.SearchHistory(session['id'], search_query, datetime.now())
             db_session.add(search_history_entry)
             db_session.commit()
 
-        if my_items and logged_in:
-            join_condition = and_(models.Item.id == models.Favorite.favorite_item, models.Favorite.user == session['id'])
-            join_stmt = outerjoin(models.Item, models.Favorite, join_condition)
-            stmt = select(models.Item, models.Favorite).select_from(join_stmt).where(models.Item.owner == session['id'])
-
-            if search_query:
-                stmt = stmt.where(
-                    models.Item.name.ilike(f"%{search_query}%") |
-                    models.Item.description.ilike(f"%{search_query}%")
-                )
-
-            selected_items = db_session.execute(stmt).all()
-        elif logged_in:
+        if logged_in:
             join_condition = and_(models.Item.id == models.Favorite.favorite_item, models.Favorite.user == session['id'])
             join_stmt = outerjoin(models.Item, models.Favorite, join_condition)
             stmt = select(models.Item, models.Favorite).select_from(join_stmt)
-
             if search_query:
-                stmt = stmt.where(
-                    models.Item.name.ilike(f"%{search_query}%") |
-                    models.Item.description.ilike(f"%{search_query}%")
-                )
-
+                stmt = stmt.where(models.Item.name.ilike(f"%{search_query}%") | models.Item.description.ilike(f"%{search_query}%"))
+            if my_items:
+                stmt = stmt.where(models.Item.owner == session['id'])
             selected_items = db_session.execute(stmt).all()
         else:
             stmt = select(models.Item)
-
             if search_query:
-                stmt = stmt.where(
-                    models.Item.name.ilike(f"%{search_query}%") |
-                    models.Item.description.ilike(f"%{search_query}%")
-                )
-
+                stmt = stmt.where(models.Item.name.ilike(f"%{search_query}%") | models.Item.description.ilike(f"%{search_query}%"))
             rows = db_session.execute(stmt).all()
             selected_items = [(row[0], None) for row in rows]
 
@@ -229,15 +206,11 @@ def item(item_id):
 def item_delete(item_id):
     item_profile = db_session.execute(select(models.Item).where(models.Item.id == item_id)).scalar()
 
-
     if item_profile:
-
         item_contracts = db_session.query(models.Contract).filter(models.Contract.item == item_id).all()
-
         if item_contracts:
             error_message = "Item cannot be deleted because it has active contracts"
             return redirect(f'/items/{item_id}?error={error_message}')
-
         db_session.delete(item_profile)
         db_session.commit()
         return redirect('/items?my_items=True')
@@ -279,7 +252,9 @@ def leasers():
 @login_check
 def leaser(leaser_id):
     user = db_session.execute(select(models.User).where(models.User.id == leaser_id)).scalar()
-    return render_template('leaser_id.html', user = user)
+    items_of_user = db_session.execute(select(models.Item).where(models.Item.owner == leaser_id)).scalars()
+
+    return render_template('leaser_id.html', user = user, items = items_of_user)
 
 @app.route('/contracts', methods=['GET', 'POST'])
 @login_check
@@ -296,6 +271,11 @@ def contracts():
         start_date = new_contract_dict['start_date']
         end_date = new_contract_dict['end_date']
         item_id = new_contract_dict['item']
+
+        if start_date <= datetime.today().strftime('%Y-%m-%d') or start_date > end_date:
+            error_message = "Dates are incorrect"
+            return redirect(f"/items/{item_id}?error={error_message}")
+
 
         conflicting_contracts = db_session.execute(
             select(models.Contract).where(
@@ -345,7 +325,6 @@ def search_history():
     if request.method == 'GET':
         history = db_session.execute(select(models.SearchHistory).where(models.SearchHistory.user == session['id'])).scalars()
         return render_template('search_history.html', history=history)
-
     else:
         db_session.execute(delete(models.SearchHistory).where(models.SearchHistory.user == session['id']))
         db_session.commit()
@@ -383,7 +362,6 @@ def review():
         if existing_feedback:
             error_message = "The review is already given"
             return redirect(f'/reviews?error={error_message}')
-
         new_feedback = models.Feedback(
                             author=session['id'],
                             user=item_contract.taker if item_contract.leaser == session['id'] else item_contract.leaser,
